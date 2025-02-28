@@ -28,9 +28,9 @@ func NewLinkHandler(mux *http.ServeMux, deps LinkHandlerDeps) {
 		LinkRepository: deps.LinkRepository,
 		EventBus:       deps.EventBus,
 	}
-	mux.HandleFunc("POST /link", handler.CreateLink())
+	mux.Handle("POST /link", middleware.IsAuthed(handler.CreateLink(), deps.Config))
 	mux.HandleFunc("GET /{hash}", handler.GoTo())
-	mux.HandleFunc("DELETE /link/{id}", handler.DeleteLink())
+	mux.Handle("DELETE /link/{id}", middleware.IsAuthed(handler.DeleteLink(), deps.Config))
 	mux.Handle("PATCH /link/{id}", middleware.IsAuthed(handler.UpdateLink(), deps.Config))
 	mux.Handle("GET /link", middleware.IsAuthed(handler.GetAll(), deps.Config))
 }
