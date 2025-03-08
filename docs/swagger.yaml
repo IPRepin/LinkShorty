@@ -1,0 +1,281 @@
+swagger: "2.0"
+info:
+  version: "1.0.0"
+  title: "LinkShorty API"
+  description: "API для управления короткими ссылками"
+host: localhost:8081
+basePath: /
+schemes:
+  - http
+securityDefinitions:
+  BearerAuth:
+    type: apiKey
+    in: header
+    name: Authorization
+paths:
+  /auth/login:
+    post:
+      summary: "Вход пользователя"
+      description: "Аутентифицирует пользователя и возвращает JWT токен"
+      tags:
+        - auth
+      consumes:
+        - application/json
+      parameters:
+        - name: request
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/auth.LoginRequest'
+      responses:
+        "200":
+          description: "Успешный вход"
+          schema:
+            $ref: '#/definitions/auth.LoginResponse'
+        "400":
+          description: "Неверные учетные данные"
+        "401":
+          description: "Неверные учетные данные"
+        "500":
+          description: "Внутренняя ошибка сервера"
+
+  /auth/register:
+    post:
+      summary: "Регистрация нового пользователя"
+      description: "Регистрирует нового пользователя в системе"
+      tags:
+        - auth
+      consumes:
+        - application/json
+      parameters:
+        - name: request
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/auth.RegisterRequest'
+      responses:
+        "201":
+          description: "Успешная регистрация"
+          schema:
+            $ref: '#/definitions/auth.RegisterResponse'
+        "400":
+          description: "Неверный формат запроса"
+        "500":
+          description: "Внутренняя ошибка сервера"
+
+  /link:
+    post:
+      summary: "Создание новой ссылки"
+      description: "Создает новую ссылку и возвращает ее."
+      tags:
+        - links
+      parameters:
+        - name: payload
+          in: body
+          required: true
+          schema:
+            type: "object"
+            properties:
+              url:
+                type: "string"
+      responses:
+        201:
+          description: "Успешно создана ссылка."
+          schema:
+            $ref: "#/definitions/Link"
+        400:
+          description: "Неверный запрос."
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+
+    get:
+      summary: "Получение всех ссылок"
+      description: "Возвращает список всех ссылок."
+      tags:
+        - links
+      responses:
+        200:
+          description: "Список ссылок."
+          schema:
+            type: "array"
+            items:
+              $ref: "#/definitions/Link"
+
+  /link/{id}:
+    delete:
+      summary: "Удаление ссылки"
+      description: "Удаляет ссылку по ID."
+      tags:
+        - links
+      parameters:
+        - name: id
+          in: path
+          required: true
+          type: string
+      responses:
+        204:
+          description: "Успешное удаление."
+        404:
+          description: "Ссылка не найдена."
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+
+    patch:
+      summary: "Обновление ссылки"
+      description: "Обновляет ссылку по ID."
+      tags:
+        - links
+      parameters:
+        - name: id
+          in: path
+          required: true
+          type: string
+        - name: payload
+          in: body
+          required: true
+          schema:
+            type: "object"
+            properties:
+              url:
+                type: "string"
+      responses:
+        200:
+          description: "Успешное обновление."
+          schema:
+            $ref: "#/definitions/Link"
+        404:
+          description: "Ссылка не найдена."
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+
+  /{hash}:
+    get:
+      summary: "Перенаправление по хешу"
+      description: "Перенаправляет на оригинальный URL по хешу."
+      tags:
+        - links
+      parameters:
+        - name: hash
+          in: path
+          required: true
+          type: string
+      responses:
+        302:
+          description: "Перенаправление на оригинальный URL."
+
+  /stats:
+    get:
+      summary: "Получение общей статистики"
+      description: "Получает статистику по всем ссылкам пользователя"
+      tags:
+        - statistics
+      security:
+        - BearerAuth: []
+      produces:
+        - application/json
+      parameters:
+        - name: from
+          in: query
+          required: true
+          type: string
+        - name: to
+          in: query
+          required: true
+          type: string
+        - name: by
+          in: query
+          required: true
+          type: string
+          enum:
+            - "day"
+            - "month"
+      responses:
+        "200":
+          description: "OK"
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/stat.StatResponse'
+        "401":
+          description: "Не авторизован"
+
+definitions:
+  Link:
+    type: "object"
+    properties:
+      id:
+        type: "string"
+      url:
+        type: "string"
+      hash:
+        type: "string"
+
+  ErrorResponse:
+    type: "object"
+    properties:
+      error:
+        type: "string"
+
+  auth.LoginRequest:
+    type: object
+    properties:
+      email:
+        type: string
+        example: user@example.com
+      password:
+        type: string
+        example: strongPassword123
+
+  auth.LoginResponse:
+    type: object
+    properties:
+      token:
+        type: string
+        example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+
+  auth.RegisterRequest:
+    type: object
+    properties:
+      email:
+        type: string
+        example: user@example.com
+      name:
+        type: string
+        example: John Doe
+      password:
+        type: string
+        example: strongPassword123
+
+  auth.RegisterResponse:
+    type: object
+    properties:
+      token:
+        type: string
+        example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+
+  link.CreateLinkRequest:
+    type: object
+    properties:
+      original_url:
+        type: string
+        example: https://very-long-link.com/some/path
+
+  link.CreateLinkResponse:
+    type: object
+    properties:
+      short_url:
+        type: string
+        example: http://short.ly/abc123
+
+  stat.StatResponse:
+    type: object
+    properties:
+      clicks:
+        type: integer
+        example: 42
+      original_url:
+        type: string
+        example: https://very-long-link.com/some/path
+      short_url:
+        type: string
+        example: http://short.ly/abc123

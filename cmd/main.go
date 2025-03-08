@@ -1,3 +1,11 @@
+// @title LinkShorty API
+// @version 1.0
+// @description Сервис для управления короткими ссылками
+// @host localhost:8081
+// @BasePath /
+// @securityDefinitions.apikey BearerAuth
+// @in header
+// @name Authorization
 package main
 
 import (
@@ -10,6 +18,7 @@ import (
 	"LinkShorty/pkg/event"
 	"LinkShorty/pkg/middleware"
 	"fmt"
+	httpSwagger "github.com/swaggo/http-swagger"
 	"net/http"
 )
 
@@ -18,6 +27,19 @@ func App() http.Handler {
 	database := db.NewDB(conf)
 	router := http.NewServeMux()
 	eventBus := event.NewEventBus()
+
+	// Swagger
+	router.Handle("/swagger/", httpSwagger.Handler(
+		httpSwagger.URL("/swagger/doc.json"), // Убедитесь, что этот путь правильный
+		httpSwagger.DeepLinking(true),
+		httpSwagger.DocExpansion("none"),
+		httpSwagger.PersistAuthorization(false),
+	))
+
+	// Обработчик для swagger/doc.json
+	router.HandleFunc("/swagger/doc.json", func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, "docs/swagger.yaml")
+	})
 
 	//Repository
 	linkRepository := link.NewLinkRepository(database)

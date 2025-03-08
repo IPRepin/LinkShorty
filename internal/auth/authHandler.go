@@ -27,6 +27,18 @@ func NewAuthHandler(mux *http.ServeMux, deps AuthHandlerDeps) {
 	mux.HandleFunc("POST /auth/login", handler.Login())
 }
 
+// Register обрабатывает регистрацию нового пользователя.
+// @Tags Auth
+// @Summary Регистрация пользователя
+// @Description Создает нового пользователя и возвращает JWT-токен
+// @Accept json
+// @Produce json
+// @Param request body auth.RegisterRequest true "Данные для регистрации"
+// @Success 201 {object} auth.RegisterResponse "Успешная регистрация"
+// @Failure 400 {object} res.ErrorResponse "Невалидные данные (например, некорректный email или пароль меньше 8 символов)"
+// @Failure 409 {object} res.ErrorResponse "Пользователь с таким email уже существует"
+// @Failure 500 {object} res.ErrorResponse "Внутренняя ошибка сервера (например, ошибка генерации токена)"
+// @Router /auth/register [post]
 func (handler *AuthHandler) Register() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		body, err := request.HandelBody[RegisterRequest](w, r)
